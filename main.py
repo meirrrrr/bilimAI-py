@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -7,7 +9,7 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
-openai.api_key = "sk-proj-HPUmnLHygduvYoRLOYn5T3BlbkFJRW82qfMJCwwmCJbYkYeF"
+openai.api_key = os.getenv('OPENAI_API_KEY')
 if not openai.api_key:
     raise ValueError("OPENAI_API_KEY not found. Please add it to your environment variables.")
 
@@ -24,6 +26,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class Question(BaseModel):
+    question: str
 
 
 class UserAnswer(BaseModel):
@@ -44,7 +49,6 @@ class HintRequest(BaseModel):
 class FeedbackResponse(BaseModel):
     feedback: str
     correct_answers_count: int
-
 
 
 @app.post("/generate_test/")
@@ -69,7 +73,6 @@ async def generate_test(request: GenerateTestRequest):
             )
             question_text = response.choices[0].message['content'].strip()
 
-            # Example parsing - adjust based on actual format returned
             question_parts = question_text.split("\n")
             if len(question_parts) >= 4:
                 question = question_parts[0].strip()
@@ -80,7 +83,7 @@ async def generate_test(request: GenerateTestRequest):
                     "question": question,
                     "correct_answer": correct_answer,
                     "incorrect_answers": incorrect_answers,
-                    "difficulty": "A",  # This can be dynamically assigned as well
+                    "difficulty": "A",
                     "topic": topic
                 }
                 new_questions.append(new_question)
@@ -100,7 +103,8 @@ async def get_hint(request: HintRequest):
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a teacher of math for 5-6 graders на русском."},
-                {"role": "user", "content": f"Give me a hint on how to solve this math problem: {request.question} на русском"}
+                {"role": "user",
+                 "content": f"Give me a hint on how to solve this math problem: {request.question} на русском"}
             ],
             max_tokens=150,
             temperature=0.7,
@@ -128,6 +132,22 @@ async def generate_feedback(user_answers: List[UserAnswer]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/ask")
+async def ask_openai(question):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant for 6th and 7th graders preparing for exams. Context: Please provide answers on russian."},
+                {"role": "user", "content": question}
+            ],
+            max_tokens=150,
+            temperature=0.7,
+        )
+        answer = response.choices[0].message.content.strip()
+        return {"question": question, "answer": answer}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
