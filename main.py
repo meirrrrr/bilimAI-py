@@ -6,8 +6,8 @@ from pydantic import BaseModel
 from typing import List
 import openai
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 
-# Load environment variables from .env file
 load_dotenv()
 openai.api_key = os.getenv('OPENAI_API_KEY')
 if not openai.api_key:
@@ -15,9 +15,7 @@ if not openai.api_key:
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:3000",
-]
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
