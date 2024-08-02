@@ -74,7 +74,7 @@ msgpack==1.0.8
 multidict==6.0.5
 mypy-extensions==1.0.0
 numpy==1.26.4
-openai>=1.32.0,<2.0.0
+openai==0.28
 orjson==3.10.6
 packaging==24.1
 pandas==2.2.2
