@@ -118,7 +118,7 @@ async def generate_feedback(user_answers: List[UserAnswer]):
         topics_to_review = {answer.topic for answer in user_answers if not answer.correct}
         correct_answers_count = sum(1 for answer in user_answers if answer.correct)
 
-        feedback_parts = [f'You need to review the topics: {topics_to_review}']
+        feedback_parts = [f'You need to review the topics: {", ".join(topics_to_review)}']
         feedback_text = " ".join(feedback_parts)
 
         return {
